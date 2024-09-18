@@ -178,7 +178,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ACTIONS_PAT }}
         run: |
-          cd .github/workflows/argocd
+          cd .github/workflows/modules/argocd
           bash generate-manifest.sh ${{ github.sha }}
 
       - name: Wait for 12 minutes (ArgoCD refresh interval is 3 minutes + 1 minute to build + 8 minutes for node to start producing blocks)
