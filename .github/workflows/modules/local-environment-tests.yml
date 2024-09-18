@@ -97,13 +97,13 @@ jobs:
         done
 
     - name: Run smoke tests
-      uses: ./partner-chains-master/.github/run-e2e-tests
+      uses: ./partner-chains-master/.github/workflows/modules/composite/run-e2e-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_get_status or test_get_params"
 
     - name: Wait for epoch 3
-      uses: ./partner-chains-masters/.github/wait-for-epoch
+      uses: ./partner-chains-masters/.github/workflows/modules/composite/wait-for-epoch
       with:
         epoch: 3
 
@@ -115,7 +115,7 @@ jobs:
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
 
     - name: Wait for epoch 4
-      uses: ./partner-chains-master/.github/wait-for-epoch
+      uses: ./partner-chains-masters/.github/workflows/modules/composite/wait-for-epoch
       with:
         epoch: 4
 
@@ -127,7 +127,7 @@ jobs:
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
 
     - name: Wait for epoch 5
-      uses: ./partner-chains-master/.github/wait-for-epoch
+      uses: ./partner-chains-masters/.github/workflows/modules/composite/wait-for-epoch
       with:
         epoch: 5
 
@@ -139,7 +139,7 @@ jobs:
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
 
     - name: Wait for epoch 6
-      uses: ./partner-chains-master/.github/wait-for-epoch
+      uses: ./partner-chains-masters/.github/workflows/modules/composite/wait-for-epoch
       with:
         epoch: 6
 
@@ -151,7 +151,7 @@ jobs:
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
 
     - name: Wait for epoch 7
-      uses: ./partner-chains-master/.github/wait-for-epoch
+      uses: ./partner-chains-masters/.github/workflows/modules/composite/wait-for-epoch
       with:
         epoch: 7
 
