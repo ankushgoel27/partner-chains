@@ -24,7 +24,7 @@ jobs:
   build-pc-artifacts:
     runs-on: ubuntu-latest 
     steps:
-      - uses: ./.github/workflows/modules/build-pc-artifacts.yml
+      - uses: ./.github/workflows/modules/artifacts/build-pc-artifacts.yml
         with:
           sha: ${{ inputs.sha }}
           tag: ${{ inputs.tag }}
@@ -33,7 +33,7 @@ jobs:
     needs: build-pc-artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/workflows/modules/build-and-publish-ecr-image.yml
+      - uses: ./.github/workflows/modules/images/build-and-publish-ecr-image.yml
         with:
           sha: ${{ inputs.sha }}
           tag: ${{ inputs.tag }}
@@ -55,14 +55,14 @@ jobs:
           echo "::set-output name=release::$release"
 
       - name: Call Download Artifact Workflow
-        uses: ./.github/workflows/modules/download-pcsc-artifact.yml
+        uses: ./.github/workflows/modules/artifacts/download-pcsc-artifact.yml
         with:
           release: ${{ steps.extract-release.outputs.release }}
           artifact: "Specify-your-artifact-name-here" 
 
   local-environment-tests:          
     needs: [build-pc-artifacts, partner-chains-smart-contracts]
-    uses: ./.github/workflows/modules/local-environment-tests.yml
+    uses: ./.github/workflows/modules/tests/local-environment-tests.yml
     with:
       tag: ${{ inputs.tag }}  
       image: ${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node:${{ inputs.sha }}
@@ -175,13 +175,13 @@ jobs:
 
   deploy-staging-preview:
     needs: chain-specs
-    uses: ./.github/workflows/modules/staging-preview-deploy.yml
+    uses: ./.github/workflows/modules/deploy/staging-preview-deploy.yml
     with:
       image: ${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node:${{ inputs.sha }}
       chain-spec-secret: staging-chain-spec-${{ inputs.sha }}
 
   build-and-publish-ghcr-image:
-    uses: ./.github/workflows/modules/build-and-publish-ghcr-image.yml
+    uses: ./.github/workflows/modules/images/build-and-publish-ghcr-image.yml
     with:
       sha: ${{ inputs.sha }}
       tag: ${{ inputs.tag }}
