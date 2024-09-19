@@ -1,0 +1,54 @@
+name: Deploy Rust Docs
+
+on:
+  workflow_call:
+    inputs:
+      ssh_key:
+        description: 'SSH key to read Substrate Repo'
+        required: true
+        type: secret
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+jobs:
+  deploy-rustdoc:
+    runs-on: ubuntu-latest
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+    steps:
+      - name: Install tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Add SSH key to read Substrate Repo
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          ssh-add - <<< "${{ inputs.ssh_key }}"
+
+      - name: Rust versions
+        run: rustup show
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2.6.2
+
+      - name: Build rustdocs
+        run: SKIP_WASM_BUILD=1 cargo doc --all --no-deps
+
+      - name: Make index.html
+        run: echo "<meta http-equiv=refresh content=0;url=node_template/index.html>" > ./target/doc/index.html
+
+      - name: Deploy documentation
+        if: ${{ github.ref_name == 'master' }}
+        uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc

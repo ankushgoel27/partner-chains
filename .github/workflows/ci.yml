@@ -1,4 +1,4 @@
-name: Main Workflow
+name: CI 
 
 on:
   push:
@@ -177,198 +177,52 @@ jobs:
             ./devnet_chain_spec.json
             ./staging_chain_spec.json
 
-  generate-manifest:
+  deploy-argocd:
       needs: build-and-push
       if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-  
-        - name: Create and Push Manifest
-          env:
-            GH_TOKEN: ${{ secrets.ACTIONS_PAT }}
-          run: |
-            cd .github/workflows/modules/argocd
-            bash generate-manifest.sh ${{ github.sha }}
-  
-        - name: Wait for 12 minutes (ArgoCD refresh interval is 3 minutes + 1 minute to build + 8 minutes for node to start producing blocks)
-          run: sleep 720s
+      uses: ./.github/workflows/modules/deploy/argocd/deploy-argocd.yml
+      with:
+        sha: ${{ github.sha }}
 
-  run-e2e-tests:
-    needs: generate-manifest
-    uses: ./.github/workflows/modules/tests/e2e.yml
+  argocd-tests:
+    needs: deploy-argocd
+    uses: ./.github/workflows/modules/tests/argocd-tests.yml
     with:
       node-host: sha-${{ github.sha }}-service.integration-testing.svc.cluster.local
       node-port: 9933
     secrets: inherit
 
-  teardown:
-      runs-on: ubuntu-latest
-      needs: [build-and-push, generate-manifest, run-e2e-tests]
+  teardown-argocd:
+      needs: [build-and-push, deploy-argocd, argocd-tests]
       if: ${{ always() && needs.generate-manifest.result == 'success' }}
-      steps:
-      - name: Checkout ArgoCD Repository
-        uses: actions/checkout@v4
-        with:
-          repository: input-output-hk/sidechains-argocd
-          token: ${{ secrets.ACTIONS_PAT }}
-          path: sidechains-argocd
+      uses: ./.github/workflows/modules/deploy/teardown-argocd.yml
+      with:
+        sha: ${{ github.sha }}
 
-      - name: Delete Ephemeral Environment Files
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.ACTIONS_PAT }}
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const directory = 'sidechains-argocd/integration-testing';
-            const files = fs.readdirSync(directory);
-
-            for (const file of files) {
-              if (file.startsWith('manifest-sha-')) {
-                console.log(`Deleting file: ${file}`);
-
-                // Fetch the SHA of the file
-                const shaResponse = await github.rest.repos.getContent({
-                  owner: 'input-output-hk',
-                  repo: 'sidechains-argocd',
-                  path: `integration-testing/${file}`,
-                });
-                const sha = shaResponse.data.sha;
-
-                // GitHub API request to delete the file
-                await github.rest.repos.deleteFile({
-                  owner: 'input-output-hk',
-                  repo: 'sidechains-argocd',
-                  path: `integration-testing/${file}`,
-                  message: `ci: Tear down integration-testing environment for SHA #${file.split('-').pop().split('.')[0]}`,
-                  sha: sha,
-                  branch: 'main'
-                });
-              }
-            }
-
-  chain-specs:
-    runs-on: [self-hosted, eks]
+  upload-chain-specs:
     needs: [build-and-push]
     if: ${{ github.ref_name == 'master' || inputs.upload == 'true' }}
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - name: Install kubectl and awscli
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-          sudo apt update && sudo apt install -y awscli
-
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
-          kubectl config set-cluster my-cluster --server=${{ secrets.K8S_SERVER }} --insecure-skip-tls-verify=true
-          kubectl config set-credentials github-actions --token=${{ secrets.K8S_SA_TOKEN }}
-          kubectl config set-context my-context --cluster=my-cluster --user=github-actions --namespace=default
-          kubectl config use-context my-context
-
-      - name: Download chain spec artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: chain-specs
-          path: ./artifacts
-
-      - name: Update Kubernetes secret for devnet chain spec
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M)
-          SHA=${{ github.sha }}
-          kubectl create secret generic "devnet-chain-spec-${TIMESTAMP}-${SHA}" --from-file=devnet_chain_spec.json=./artifacts/devnet_chain_spec.json --namespace=sc
-
-      - name: Update Kubernetes secret for staging chain spec
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M)
-          SHA=${{ github.sha }}
-          kubectl create secret generic "staging-chain-spec-${TIMESTAMP}-${SHA}" --from-file=staging_chain_spec.json=./artifacts/staging_chain_spec.json --namespace=staging
+    uses: ./.github/workflows/modules/deploy/upload-chain-specs.yml
+    with:
+      sha: ${{ github.sha }}
 
   deploy-rustdoc:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.rustdoc == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install tooling
-        run: |
-          sudo apt-get install -y protobuf-compiler
-          protoc --version
+    uses: ./.github/workflows/modules/deploy/deploy-rustdoc.yml
+    with:
+      ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Add SSH key to read Substrate Repo
-        run: |
-          mkdir ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
-          ssh-add - <<< "${{ secrets.SUBSTRATE_REPO_SSH_KEY }}"
-
-      - name: Rust versions
-        run: rustup show
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2.6.2
-
-      - name: Build rustdocs
-        run: SKIP_WASM_BUILD=1 cargo doc --all --no-deps
-
-      - name: Make index.html
-        run: echo "<meta http-equiv=refresh content=0;url=node_template/index.html>" > ./target/doc/index.html
-
-      - name: Deploy documentation
-        if: ${{ github.ref_name == 'master' }}
-        uses: peaceiris/actions-gh-pages@v3.9.3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./target/doc
-
-  build-and-test:
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      matrix:
-        os: [nixos, macos]
-    runs-on:
-      - self-hosted
-      - ${{ matrix.os }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ github.token }}
-
-      - name: Update flake.lock with calling PR
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        run: |
-          nix flake lock --update-input trustless-sidechain \
-          --override-input trustless-sidechain \
-          github:input-output-hk/partner-chains-smart-contracts/${{ github.event.client_payload.ref }}
-
-      - name: Acquire AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_ }}
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
-
-      - name: Add signing key for nix
-        run: echo "${{ secrets.NIX_SIGNING_KEY }}" > "${{ runner.temp }}/nix-key"
-
-      - name: Run nixci to build/test all outputs
-        run: |
-          nix run github:srid/nixci -- -v build -- --fallback > /tmp/outputs
-
-      - name: Copy nix scopes to nix cache
-        run: |
-          nix-store --stdin -q --deriver < /tmp/outputs | nix-store --stdin -qR --include-outputs \
-          | nix copy --stdin --to \
-          "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
-          && rm /tmp/outputs
+   devshell-tests:
+     permissions:
+       id-token: write
+       contents: read
+     uses: ./.github/workflows/modules/tests/devshell-tests.yml
+     secrets:
+       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+       NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
+       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    

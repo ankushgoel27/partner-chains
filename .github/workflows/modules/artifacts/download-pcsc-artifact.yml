@@ -1,20 +1,44 @@
-name: Download PCSC Artifact
-
-on:
-  workflow_call:
-    inputs:
-      release:
-        description: "release name"
-      artifact:
-        description: "artifact name"
-
 jobs:
-  - name: Download Artifact from GitHub Release
-    run: |
-      wget "https://github.com/input-output-hk/partner-chains-smart-contracts/releases/download/${{ inputs.release }}/${{ inputs.artifact }}"
+  parse-flake-and-download-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
 
-  - name: Upload Artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: partner-chains-smart-contracts-artifact
-      path: ${{ inputs.artifact }} 
+      - name: Extract PCSC Release Info from flake.nix
+        id: extract-release
+        run: |
+          echo "Extracting PCSC release version from flake.nix..."
+          release=$(grep -Po 'url = "github:input-output-hk/partner-chains-smart-contracts/v\K[0-9.]+(?=";)' flake.nix)
+          echo "Release version: v$release"
+          echo "::set-output name=release::v$release"
+
+      - name: Construct Artifact Name
+        id: construct-artifact
+        run: |
+          version_without_v=${{ steps.extract-release.outputs.release#v }}
+          artifact="trustless-sidechain-cli-${version_without_v}-x86_64-linux.zip"
+          echo "Constructed artifact name: $artifact"
+          echo "::set-output name=artifact::$artifact"
+
+      - name: Download Artifact as zipped.zip
+        run: |
+          wget -O zipped.zip "https://github.com/input-output-hk/partner-chains-smart-contracts/releases/download/${{ steps.extract-release.outputs.release }}/${{ steps.construct-artifact.outputs.artifact }}"
+
+      - name: Extract zipped.zip to a temporary directory
+        run: |
+          mkdir temp_dir
+          unzip zipped.zip -d temp_dir
+
+      - name: Rename extracted directory to partner-chains-smart-contracts
+        run: |
+          original_dir=$(ls temp_dir)
+          mv "temp_dir/$original_dir" partner-chains-smart-contracts
+
+      - name: Upload Extracted Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: partner-chains-smart-contracts-artifact
+          path: partner-chains-smart-contracts

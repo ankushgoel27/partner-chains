@@ -11,6 +11,8 @@ on:
         description: "partner-chains-smart-contracts commit SHA or branch to build from"
 
 jobs:
+
+
   partner-chains-smart-contracts-x86_64-linux:
     runs-on: [self-hosted, nixos]
     steps:
