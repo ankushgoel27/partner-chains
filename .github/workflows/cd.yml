@@ -50,18 +50,19 @@ jobs:
       tag: ${{ inputs.tag }}  
       image: ${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node:${{ inputs.sha }}
 
+  chain-specs:
+    needs: local-environment-tests
+    uses: ./.github/workflows/modules/artifacts/generate-chain-specs.yml
+    with:
+      sha: ${{ inputs.sha }}  
+
   create-draft-release:
+    needs: local-environment-tests
     uses: ./.github/workflows/modules/release/create-draft-release.yml
     with:
       tag: ${{ inputs.tag }}  
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  chain-specs:
-    needs: build-pc-artifacts
-    uses: ./.github/workflows/modules/artifacts/generate-chain-specs.yml
-    with:
-      sha: ${{ inputs.sha }}  
 
   deploy-staging-preview:
     needs: chain-specs

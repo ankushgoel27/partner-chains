@@ -47,6 +47,18 @@ jobs:
         AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
         ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
 
+   devshell-tests:
+     permissions:
+       id-token: write
+       contents: read
+     uses: ./.github/workflows/modules/tests/devshell-tests.yml
+     secrets:
+       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+       NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
+       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+
   deploy-argocd:
       needs: build-and-push
       if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
@@ -84,15 +96,4 @@ jobs:
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-   devshell-tests:
-     permissions:
-       id-token: write
-       contents: read
-     uses: ./.github/workflows/modules/tests/devshell-tests.yml
-     secrets:
-       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-       NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
-       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
     
