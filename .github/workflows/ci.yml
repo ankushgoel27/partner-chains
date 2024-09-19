@@ -1,10 +1,13 @@
-name: earthly ci
+name: Main Workflow
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - master
+      - '**' 
   workflow_dispatch:
     inputs:
       upload:
@@ -19,14 +22,22 @@ on:
         description: "Branch name to build"
         required: true
         default: 'master'
+      rustdoc:
+        description: "Build and publish the rustdoc"
+        default: false
+        type: boolean
+  repository_dispatch:
+    types: [test-run-pr]
+
 env:
   AWS_REGION: "eu-central-1"
+  AWS_DEFAULT_REGION: "eu-central-1"
   SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    if: ${{ github.event.action != 'closed' || github.event.pull_request.merged == true }}
     concurrency:
       group: pr-${{ github.event.pull_request.number }}-author-${{ github.event.pull_request.user.login }}
       cancel-in-progress: true
@@ -167,22 +178,22 @@ jobs:
             ./staging_chain_spec.json
 
   generate-manifest:
-    needs: build-and-push
-    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create and Push Manifest
-        env:
-          GH_TOKEN: ${{ secrets.ACTIONS_PAT }}
-        run: |
-          cd .github/workflows/modules/argocd
-          bash generate-manifest.sh ${{ github.sha }}
-
-      - name: Wait for 12 minutes (ArgoCD refresh interval is 3 minutes + 1 minute to build + 8 minutes for node to start producing blocks)
-        run: sleep 720s
+      needs: build-and-push
+      if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+  
+        - name: Create and Push Manifest
+          env:
+            GH_TOKEN: ${{ secrets.ACTIONS_PAT }}
+          run: |
+            cd .github/workflows/modules/argocd
+            bash generate-manifest.sh ${{ github.sha }}
+  
+        - name: Wait for 12 minutes (ArgoCD refresh interval is 3 minutes + 1 minute to build + 8 minutes for node to start producing blocks)
+          run: sleep 720s
 
   run-e2e-tests:
     needs: generate-manifest
@@ -193,10 +204,10 @@ jobs:
     secrets: inherit
 
   teardown:
-    runs-on: ubuntu-latest
-    needs: [build-and-push, generate-manifest, run-e2e-tests]
-    if: always() && needs.generate-manifest.result == 'success'
-    steps:
+      runs-on: ubuntu-latest
+      needs: [build-and-push, generate-manifest, run-e2e-tests]
+      if: ${{ always() && needs.generate-manifest.result == 'success' }}
+      steps:
       - name: Checkout ArgoCD Repository
         uses: actions/checkout@v4
         with:
@@ -242,7 +253,7 @@ jobs:
   chain-specs:
     runs-on: [self-hosted, eks]
     needs: [build-and-push]
-    if: github.ref_name == 'master' || inputs.upload == true
+    if: ${{ github.ref_name == 'master' || inputs.upload == 'true' }}
     permissions:
       id-token: write
       contents: write
@@ -279,3 +290,85 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M)
           SHA=${{ github.sha }}
           kubectl create secret generic "staging-chain-spec-${TIMESTAMP}-${SHA}" --from-file=staging_chain_spec.json=./artifacts/staging_chain_spec.json --namespace=staging
+
+  deploy-rustdoc:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.rustdoc == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install tooling
+        run: |
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+
+      - name: Add SSH key to read Substrate Repo
+        run: |
+          mkdir ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          ssh-add - <<< "${{ secrets.SUBSTRATE_REPO_SSH_KEY }}"
+
+      - name: Rust versions
+        run: rustup show
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2.6.2
+
+      - name: Build rustdocs
+        run: SKIP_WASM_BUILD=1 cargo doc --all --no-deps
+
+      - name: Make index.html
+        run: echo "<meta http-equiv=refresh content=0;url=node_template/index.html>" > ./target/doc/index.html
+
+      - name: Deploy documentation
+        if: ${{ github.ref_name == 'master' }}
+        uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc
+
+  build-and-test:
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        os: [nixos, macos]
+    runs-on:
+      - self-hosted
+      - ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Update flake.lock with calling PR
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        run: |
+          nix flake lock --update-input trustless-sidechain \
+          --override-input trustless-sidechain \
+          github:input-output-hk/partner-chains-smart-contracts/${{ github.event.client_payload.ref }}
+
+      - name: Acquire AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_ }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Add signing key for nix
+        run: echo "${{ secrets.NIX_SIGNING_KEY }}" > "${{ runner.temp }}/nix-key"
+
+      - name: Run nixci to build/test all outputs
+        run: |
+          nix run github:srid/nixci -- -v build -- --fallback > /tmp/outputs
+
+      - name: Copy nix scopes to nix cache
+        run: |
+          nix-store --stdin -q --deriver < /tmp/outputs | nix-store --stdin -qR --include-outputs \
+          | nix copy --stdin --to \
+          "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
+          && rm /tmp/outputs
