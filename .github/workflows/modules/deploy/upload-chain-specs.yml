@@ -48,16 +48,6 @@ jobs:
           kubectl create secret generic "$SECRET_NAME" \
             --from-file=devnet_chain_spec.json=./artifacts/devnet_chain_spec.json \
             --namespace=sc
-      
-      - name: Update Kubernetes secret for staging chain spec
-        run: |
-          SHA=${{ inputs.sha }}
-          SECRET_NAME="staging-chain-spec-${SHA}"
-      
-          kubectl delete secret "$SECRET_NAME" --namespace=staging --ignore-not-found
-          kubectl create secret generic "$SECRET_NAME" \
-            --from-file=staging_chain_spec.json=./artifacts/staging_chain_spec.json \
-            --namespace=staging
         
       - name: Update Kubernetes secret for staging-preview chain spec
         run: |

@@ -24,22 +24,19 @@ jobs:
       - name: Generate Chain Specs
         run: |
           chmod +x ./partner-chains-node
-          source ./devnet/.envrc
+          source ./envs/devnet/.envrc
           ./partner-chains-node build-spec --chain local --disable-default-bootnode --raw > devnet_chain_spec.json
-          source ./staging/.envrc
-          ./partner-chains-node build-spec --chain staging --disable-default-bootnode --raw > staging_chain_spec.json
-          source ./staging-preview/.envrc
-          ./partner-chains-node build-spec --chain staging-preview --disable-default-bootnode --raw > staging_preview_chain_spec.json
-          source ./staging-preprod/.envrc
-          ./partner-chains-node build-spec --chain staging-preprod --disable-default-bootnode --raw > staging_preprod_chain_spec.json
+          source ./envs/staging-preview/.envrc
+          ./partner-chains-node build-spec --chain staging --disable-default-bootnode --raw > staging_preview_chain_spec.json
+          source ./envs/staging-preprod/.envrc
+          ./partner-chains-node build-spec --chain staging --disable-default-bootnode --raw > staging_preprod_chain_spec.json
 
-      - name: Upload Chain Specs for both chains
+      - name: Upload Chain Specs 
         uses: actions/upload-artifact@v4
         with:
           name: chain-specs
           path: |
             devnet_chain_spec.json
-            staging_chain_spec.json
             staging_preview_chain_spec.json
             staging_preprod_chain_spec.json
         

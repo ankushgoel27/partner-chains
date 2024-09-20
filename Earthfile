@@ -142,14 +142,20 @@ INSTALL:
 chainspecs:
   FROM +setup
   DO +INSTALL
-  COPY devnet/.envrc devnet/.envrc
-  COPY devnet/addresses.json devnet/addresses.json
-  COPY staging/.envrc staging/.envrc
-  COPY staging/addresses.json staging/addresses.json
-  # `.` (dot) is equivalent of `source` in /bin/sh
-  RUN . ./devnet/.envrc \
+  COPY envs/devnet/.envrc envs/devnet/.envrc
+  COPY envs/devnet/addresses.json envs/devnet/addresses.json
+  COPY envs/staging-preview/.envrc envs/staging-preview/.envrc
+  COPY envs/staging-preview/addresses.json envs/staging-preview/addresses.json
+  COPY envs/staging-preprod/.envrc envs/staging-preprod/.envrc
+  COPY envs/staging-preprod/addresses.json envs/staging-preprod/addresses.json
+  # `.` (dot) is equivalent to `source` in /bin/sh
+  RUN . ./envs/devnet/.envrc \
       && partner-chains-node build-spec --chain local --disable-default-bootnode --raw > devnet_chain_spec.json
-  RUN. ./staging/.envrc \
-      && partner-chains-node build-spec --chain staging --disable-default-bootnode --raw > staging_chain_spec.json
+  RUN . ./envs/staging-preview/.envrc \
+      && partner-chains-node build-spec --chain staging-preview --disable-default-bootnode --raw > staging_preview_chain_spec.json
+  RUN . ./envs/staging-preprod/.envrc \
+      && partner-chains-node build-spec --chain staging-preprod --disable-default-bootnode --raw > staging_preprod_chain_spec.json
   SAVE ARTIFACT devnet_chain_spec.json AS LOCAL devnet_chain_spec.json
-  SAVE ARTIFACT staging_chain_spec.json AS LOCAL staging_chain_spec.json
+  SAVE ARTIFACT staging_preview_chain_spec.json AS LOCAL staging_preview_chain_spec.json
+  SAVE ARTIFACT staging_preprod_chain_spec.json AS LOCAL staging_preprod_chain_spec.json
+      

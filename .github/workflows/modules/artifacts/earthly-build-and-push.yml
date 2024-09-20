@@ -167,6 +167,5 @@ jobs:
           name: chain-specs
           path: |
             ./devnet_chain_spec.json
-            ./staging_chain_spec.json
             ./staging_preview_chain_spec.json
             ./staging_preprod_chain_spec.json
