@@ -565,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "authority-selection-inherents"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "chain-params",
@@ -921,7 +921,7 @@ checksum = "c3ac9f8b63eca6fd385229b3675f6cc0dc5c8a5c8a54a59d4f52ffd670d87b0c"
 
 [[package]]
 name = "byte-string-derive"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "hex",
  "quote",
@@ -1210,7 +1210,7 @@ checksum = "4b82cf0babdbd58558212896d1a4272303a57bdb245c2bf1147185fb45640e70"
 
 [[package]]
 name = "cli-commands"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1794,7 +1794,7 @@ dependencies = [
 
 [[package]]
 name = "db-sync-follower"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "bigdecimal 0.4.5",
@@ -2262,7 +2262,7 @@ checksum = "e48c92028aaa870e83d51c64e5d4e0b6981b360c522198c23959f219a4e1b15b"
 
 [[package]]
 name = "epoch-derivation"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "figment",
  "frame-support",
@@ -4736,7 +4736,7 @@ dependencies = [
 
 [[package]]
 name = "main-chain-follower-api"
-version = "0.0.1-dev"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "blake2b_simd",
@@ -4752,7 +4752,7 @@ dependencies = [
 
 [[package]]
 name = "main-chain-follower-cli"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "clap",
  "db-sync-follower",
@@ -4767,7 +4767,7 @@ dependencies = [
 
 [[package]]
 name = "main-chain-follower-mock"
-version = "0.0.1-dev"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "epoch-derivation",
@@ -4959,7 +4959,7 @@ dependencies = [
 
 [[package]]
 name = "mock-types"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5630,7 +5630,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-block-rewards"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5709,7 +5709,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-session-validator-management"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5725,7 +5725,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-session-validator-management-benchmarking"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "chain-params",
  "frame-benchmarking",
@@ -5751,7 +5751,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-session-validator-management-rpc"
-version = "0.0.1"
+version = "1.1.0"
 dependencies = [
  "derive-new",
  "jsonrpsee",
@@ -5761,7 +5761,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-sidechain"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5779,7 +5779,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-sidechain-rpc"
-version = "0.0.1"
+version = "1.1.0"
 dependencies = [
  "derive-new",
  "epoch-derivation",
@@ -6010,7 +6010,7 @@ checksum = "7924d1d0ad836f665c9065e26d016c673ece3993f30d340068b16f282afc1156"
 
 [[package]]
 name = "partner-chains-cli"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "chain-params",
@@ -6035,7 +6035,7 @@ dependencies = [
 
 [[package]]
 name = "partner-chains-node"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "assert_cmd",
  "async-trait",
@@ -6307,7 +6307,7 @@ checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 
 [[package]]
 name = "plutus"
-version = "0.0.1-dev"
+version = "1.1.0"
 dependencies = [
  "hex",
  "minicbor",
@@ -6319,7 +6319,7 @@ dependencies = [
 
 [[package]]
 name = "plutus-datum-derive"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "quote",
  "syn 2.0.71",
@@ -8703,7 +8703,7 @@ dependencies = [
 
 [[package]]
 name = "selection"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "parity-scale-codec",
  "quickcheck",
@@ -8840,7 +8840,7 @@ dependencies = [
 
 [[package]]
 name = "session-manager"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "derive-new",
  "frame-system",
@@ -8936,7 +8936,7 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "sidechain-block-search"
-version = "0.0.1"
+version = "1.1.0"
 dependencies = [
  "hex",
  "hex-literal",
@@ -8956,7 +8956,7 @@ dependencies = [
 
 [[package]]
 name = "sidechain-domain"
-version = "0.0.1"
+version = "1.1.0"
 dependencies = [
  "blake2b_simd",
  "byte-string-derive",
@@ -8979,7 +8979,7 @@ dependencies = [
 
 [[package]]
 name = "sidechain-mc-hash"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "main-chain-follower-api",
@@ -9060,7 +9060,7 @@ dependencies = [
 
 [[package]]
 name = "sidechain-slots"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "parity-scale-codec",
  "proptest",
@@ -9302,7 +9302,7 @@ dependencies = [
 
 [[package]]
 name = "sp-block-rewards"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -9703,7 +9703,7 @@ dependencies = [
 
 [[package]]
 name = "sp-session-validator-management"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "epoch-derivation",
  "parity-scale-codec",
@@ -9749,7 +9749,7 @@ dependencies = [
 
 [[package]]
 name = "sp-sidechain"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -10657,7 +10657,7 @@ dependencies = [
 
 [[package]]
 name = "time-source"
-version = "0.1.0"
+version = "1.1.0"
 
 [[package]]
 name = "tiny-keccak"
