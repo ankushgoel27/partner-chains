@@ -26,7 +26,7 @@ jobs:
     uses: ./.github/workflows/earthly-build-and-push.yml
     with:
       repository: ${{ github.repository }}
-      branch: ${{ github.head_ref }}
+      branch: ${{ github.ref }}
       upload: 'true'
     secrets:
       SUBSTRATE_REPO_SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
