@@ -144,11 +144,13 @@ chainspecs:
   DO +INSTALL
   COPY envs/devnet/.envrc envs/devnet/.envrc
   COPY envs/devnet/addresses.json envs/devnet/addresses.json
+
   COPY envs/staging-preview/.envrc envs/staging-preview/.envrc
   COPY envs/staging-preview/addresses.json envs/staging-preview/addresses.json
+
   COPY envs/staging-preprod/.envrc envs/staging-preprod/.envrc
   COPY envs/staging-preprod/addresses.json envs/staging-preprod/addresses.json
-  # `.` (dot) is equivalent to `source` in /bin/sh
+
   RUN . ./envs/devnet/.envrc \
       && partner-chains-node build-spec --chain local --disable-default-bootnode --raw > devnet_chain_spec.json
   RUN . ./envs/staging-preview/.envrc \
