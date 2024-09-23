@@ -129,7 +129,7 @@ jobs:
       - name: Deploy Rust Docs
         uses: ./.github/actions/deploy/deploy-rustdoc
         with:
-          ssh_key: ${{ inputs.ssh_key }}
+          ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
