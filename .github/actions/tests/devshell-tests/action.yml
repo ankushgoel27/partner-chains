@@ -22,7 +22,7 @@ runs:
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Add signing key for Nix
       run: echo "${{ secrets.NIX_SIGNING_KEY }}" > "${{ runner.temp }}/nix-key"
@@ -37,6 +37,6 @@ runs:
       run: |
         nix-store --stdin -q --deriver < /tmp/outputs | nix-store --stdin -qR --include-outputs \
         | nix copy --stdin --to \
-        "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
+        "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_REGION" \
         && rm /tmp/outputs
       shell: bash
