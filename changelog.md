@@ -6,6 +6,7 @@ This changelog is based on [Keep A Changelog](https://keepachangelog.com/en/1.1.
 
 ## Changed
 
+* Switched to paritytech/polkadot-sdk polkadot-stable2407-2. No migration is required because of this change.
 * Reverted usage of custom Runner that allowed `async_run` with asynchronous initializer.
   Now `Runner` code used is the same as in paritytech/polkadot-sdk.
   This change requires updates in node: `new_partial` cannot be async.
@@ -18,6 +19,7 @@ This changelog is based on [Keep A Changelog](https://keepachangelog.com/en/1.1.
   to `sc-partner-chains-consensus-aura` and `sp-partner-chains-consensus-aura`.
   This change requires migration of the node, PartnerChainsProposerFactory has to be used.
   See `service.rs` in `partner-chains-node` crate for an example.
+* renamed sidechain-main-cli and relevant naming to pc-contracts-cli
 
 ## Removed
 
@@ -27,6 +29,8 @@ This changelog is based on [Keep A Changelog](https://keepachangelog.com/en/1.1.
 * ETCM-7811 - native token movement observability components: `sp-native-token-management` and
 `pallet-native-token-management` crates; data sources behind the `native-token` feature in
 `main-chain-follower-api` and `db-sync-follower` crates.
+* added helper functions to `SidechainParams` and all `MainChainScripts` types to read them from environment
+* Extrinsic `set_main_chain_scripts` for migrating to new committee selection main chain scripts
 
 # v1.0.0rc1
 
@@ -68,7 +72,7 @@ users in their runtime crate.
 * ETCM-7762 - update to polkadot v1.13.0 - requires adaption in node code, because GenericChainSpec has lost one generic parameter
 * ETCM-7759 - decoupled all crates that use chain follower data sources from the concrete `DataSources` type.
 Now all logic accepts any type that implements one of the traits: `XXXDataSource` or `HasXXXDataSource`.
-* ETCM-7766 - updates to accommodate to new version of trustless-sidechain: containers and devnet settings and utilities
+* ETCM-7766 - updates to accommodate to new version of partner-chains-smart-contracts: containers and devnet settings and utilities
 * BREAKING: ETCM-7818 read candidates related main chain configuration from ledger, not from environment. Migration for existing chains is to put proper configuration in the ledger and then export chain as a spec file.
 * ETCM-7855 - removed all Active Flow-related components and features. This change should not affect
 Partner Chains nodes that did not use Active Flow.
@@ -117,7 +121,7 @@ Cleaned `inherent_data.rs` which now contains only wiring and necessary minor he
 * ETCM-7080: add aura and grandpa public keys to registrations data returned from RPC method
 
 ## Changed
-* IMPORTANT: trustless-sidechain revision has been updated in flake.nix.  Downstream projects, like Midnight, should keep using the previous value, to keep configuration utilities in sync with their testnets.
+* IMPORTANT: partner-chains-smart-contracts revision has been updated in flake.nix.  Downstream projects, like Midnight, should keep using the previous value, to keep configuration utilities in sync with their testnets.
 * BREAKING: ETCM-5905 - remove all storage maps from pallet-active-flow
 
 * ETCM-7136 - replaced the local partner-chains-session pallet with one from the SDK
@@ -151,7 +155,7 @@ hiding each data source type behind a feature
 ## Changed
 * BREAKING: ETCM-5898 - remove storage maps from pallet-session-validator-management and simplify the committee rotation logic
 * ETCM-6877 - improved the performance of getting the latest on chain committee hash, requires update in deployment configuration.
-* ETCM-6822 - update trustless-sidechain revision to: 76f57380b6d85f2c1a1f212591a99ebd0db96213.
+* ETCM-6822 - update partner-chains-smart-contracts revision to: 76f57380b6d85f2c1a1f212591a99ebd0db96213.
 * ETCM-6816, ETCM-6813 - removed dependency on `sidechain-inherents`, `mock-types` and `sidechain-domain` from `pallet-session-validator-management` crate
 * ETCM-6813 - moved authority selection code from `sidechain-inherents` to a new `authority-selection-inherents` crate
 * ETCM-6813 - moved code shared between `authority-selection-inherents` and `pallet-session-validator-management`

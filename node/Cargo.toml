@@ -1,6 +1,6 @@
 [package]
 name = "partner-chains-node"
-version = "1.0.0"
+version = "1.1.0"
 description = "A reference implementation of a partner chain node"
 authors = [ "IOG "]
 homepage = "https://iohk.io/"
@@ -71,6 +71,7 @@ thiserror = { workspace = true }
 time-source = { workspace = true }
 derive-new = { workspace = true }
 partner-chains-node-commands = { workspace = true }
+envy = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true }

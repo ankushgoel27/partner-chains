@@ -1,4 +1,4 @@
-//!  Pallet for setting the Sidechain validators using inherent data
+//!  Pallet for setting the Partner Chain validators using inherent data
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::type_complexity)]
@@ -21,6 +21,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use log::{info, warn};
+	use sidechain_domain::{MainchainAddress, PolicyId};
 	use sp_runtime::traits::{One, Zero};
 	use sp_session_validator_management::*;
 	use sp_std::fmt::Display;
@@ -252,14 +253,26 @@ pub mod pallet {
 			});
 			Ok(())
 		}
-	}
 
-	// TODO move the code below to some primitives module or sth like that
-	pub struct OptionIdentity;
-
-	impl<T> sp_runtime::traits::Convert<T, Option<T>> for OptionIdentity {
-		fn convert(controller: T) -> Option<T> {
-			Some(controller)
+		/// Changes the main chain scripts used for committee rotation.
+		///
+		/// This extrinsic must be run either using `sudo` or some other chain governance mechanism.
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::set(1))]
+		pub fn set_main_chain_scripts(
+			origin: OriginFor<T>,
+			committee_candidate_address: MainchainAddress,
+			d_parameter_policy_id: PolicyId,
+			permissioned_candidates_policy_id: PolicyId,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let new_scripts = MainChainScripts {
+				committee_candidate_address,
+				d_parameter_policy_id,
+				permissioned_candidates_policy_id,
+			};
+			MainChainScriptsConfiguration::<T>::put(new_scripts);
+			Ok(())
 		}
 	}
 
