@@ -8,26 +8,6 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - '**' 
-  workflow_dispatch:
-    inputs:
-      upload:
-        description: "Upload the container to our registry"
-        default: false
-        type: boolean
-      repository:
-        description: "GitHub repository name (e.g., username/repo)"
-        required: true
-        default: 'input-output-hk/partner-chains'
-      branch:
-        description: "Branch name to build"
-        required: true
-        default: 'master'
-      rustdoc:
-        description: "Build and publish the rustdoc"
-        default: false
-        type: boolean
-  repository_dispatch:
-    types: [test-run-pr]
 
 env:
   AWS_REGION: "eu-central-1"
@@ -36,7 +16,7 @@ env:
 
 jobs:
   earthly-build-and-push:
-      uses: ./.github/workflows/modules/artifacts/earthly-build-and-push.yml
+      uses: ./.github/workflows/earthly-build-and-push.yml
       with:
         repository: ${{ github.repository }}
         branch: ${{ github.head_ref }}
@@ -47,53 +27,87 @@ jobs:
         AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
         ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
 
-   devshell-tests:
-     permissions:
-       id-token: write
-       contents: read
-     uses: ./.github/workflows/modules/tests/devshell-tests.yml
-     secrets:
-       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-       NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
-       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+  devshell-tests:
+    strategy:
+      matrix:
+        os: [nixos, macos]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Nix Devshells Tests
+        uses: ./.github/actions/tests/devshell-tests
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
+          AWS_DEFAULT_REGION: "eu-central-1"
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
   deploy-argocd:
-      needs: build-and-push
+      needs: earthly-build-and-push
       if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
-      uses: ./.github/workflows/modules/deploy/argocd/deploy-argocd.yml
-      with:
-        sha: ${{ github.sha }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Deploy ArgoCD Node
+          uses: ./.github/actions/deploy/argocd/deploy-argocd
+          with:
+            sha: ${{ github.sha }}
+          env:
+            ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   argocd-tests:
     needs: deploy-argocd
-    uses: ./.github/workflows/modules/tests/argocd-tests.yml
-    with:
-      node-host: sha-${{ github.sha }}-service.integration-testing.svc.cluster.local
-      node-port: 9933
-    secrets: inherit
+    runs-on: [self-hosted, eks]
+    steps:
+      - name: Run Tests
+        uses: ./.github/actions/tests/run-k8-tests
+        with:
+          node-host: sha-${{ github.sha }}-service.integration-testing.svc.cluster.local
+          node-port: 9933
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          AWS_ROLE_ARN_: ${{ secrets.AWS_ROLE_ARN_ }}
+          SSH_KEY_BINARY_HOST: ${{ secrets.SSH_KEY_BINARY_HOST }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   teardown-argocd:
-      needs: [build-and-push, deploy-argocd, argocd-tests]
+      needs: [earthly-build-and-push, deploy-argocd, argocd-tests]
       if: ${{ always() && needs.generate-manifest.result == 'success' }}
-      uses: ./.github/workflows/modules/deploy/teardown-argocd.yml
-      with:
-        sha: ${{ github.sha }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Teardown ArgoCD Environment
+          uses: ./.github/actions/deploy/argocd/teardown-argocd
+          with:
+            sha: ${{ github.sha }}
+          env:
+            ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   upload-chain-specs:
-    needs: [build-and-push]
+    needs: [earthly-build-and-push]
     if: ${{ github.ref_name == 'master' || inputs.upload == 'true' }}
-    uses: ./.github/workflows/modules/deploy/upload-chain-specs.yml
-    with:
-      sha: ${{ github.sha }}
+    runs-on: [self-hosted, eks]
+    steps:
+      - name: Upload chain spec artifacts to Kubernetes
+        uses: ./.github/actions/upload-chain-specs
+        with:
+          sha: ${{ github.sha }}
+        env:
+          kubeconfig_base64: ${{ secrets.kubeconfig_base64 }}
+          K8S_SERVER: ${{ secrets.K8S_SERVER }}
+          K8S_SA_TOKEN: ${{ secrets.K8S_SA_TOKEN }}
 
   deploy-rustdoc:
+    runs-on: ubuntu-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.rustdoc == 'true' }}
-    uses: ./.github/workflows/modules/deploy/deploy-rustdoc.yml
-    with:
-      ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Deploy Rust Docs
+        uses: ./.github/actions/deploy/deploy-rustdoc
+        with:
+          ssh_key: ${{ inputs.ssh_key }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
     
