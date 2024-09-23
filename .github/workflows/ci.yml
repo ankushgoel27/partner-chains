@@ -52,7 +52,7 @@ jobs:
 
   deploy-argocd:
     needs: earthly-build-and-push
-    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Deploy ArgoCD Node
@@ -81,7 +81,6 @@ jobs:
 
   teardown-argocd:
     needs: [earthly-build-and-push, deploy-argocd, argocd-tests]
-    if: ${{ always() && needs.generate-manifest.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Teardown ArgoCD Environment
@@ -93,7 +92,7 @@ jobs:
 
   upload-chain-specs:
     needs: [earthly-build-and-push]
-    if: ${{ github.ref_name == 'master' || inputs.upload == 'true' }}
+    if: github.event.pull_request.merged == true
     runs-on: [self-hosted, eks]
     steps:
       - name: Upload chain spec artifacts to Kubernetes
@@ -107,7 +106,7 @@ jobs:
 
   deploy-rustdoc:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.rustdoc == 'true' }}
+    if: github.event.pull_request.merged == true
     steps:
       - name: Deploy Rust Docs
         uses: ./.github/actions/deploy/deploy-rustdoc
