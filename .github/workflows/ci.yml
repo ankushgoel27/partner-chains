@@ -5,20 +5,6 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - master
-  workflow_dispatch:
-    inputs:
-      upload:
-        description: "Upload the container to our registry"
-        default: false
-        type: boolean
-      repository:
-        description: "GitHub repository name (e.g., username/repo)"
-        required: false
-        default: 'input-output-hk/partner-chains'
-      branch:
-        description: "Branch name to build"
-        required: false
-        default: 'master'
 env:
   AWS_REGION: "eu-central-1"
   SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -37,9 +23,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repository || github.repository }}
-          ref: ${{ inputs.branch || github.event.pull_request.head.ref || github.ref }}
 
       - name: Setup Earthly
         uses: ./.github/earthly-setup
@@ -116,10 +99,10 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
   deploy-argocd:
+    needs: earthly-build-and-push
     permissions:
       id-token: write
       contents: write
-    needs: earthly-build-and-push
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
@@ -131,10 +114,10 @@ jobs:
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   argocd-tests:
+    needs: deploy-argocd
     permissions:
       id-token: write
       contents: write
-    needs: deploy-argocd
     runs-on: [self-hosted, eks]
     steps:
       - name: Run Tests
@@ -151,10 +134,10 @@ jobs:
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   teardown-argocd:
+    needs: argocd-tests
     permissions:
       id-token: write
       contents: write
-    needs: [earthly-build-and-push, deploy-argocd, argocd-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Teardown ArgoCD Environment
