@@ -67,12 +67,12 @@ jobs:
           path: |
             ./devnet_chain_spec.json
             ./staging_preview_chain_spec.json
-            ./staging_preprod_chain_spec.json}
+            ./staging_preprod_chain_spec.json
 
   devshell-tests:
     permissions:
       id-token: write
-      contents: read
+      contents: write
     strategy:
       matrix:
         os: [nixos, macos]
