@@ -1,37 +1,100 @@
 name: CI 
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - '**' 
+      - master
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Upload the container to our registry"
+        default: false
+        type: boolean
+      repository:
+        description: "GitHub repository name (e.g., username/repo)"
+        required: false
+        default: 'input-output-hk/partner-chains'
+      branch:
+        description: "Branch name to build"
+        required: false
+        default: 'master'
+env:
+  AWS_REGION: "eu-central-1"
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
 permissions:
   id-token: write
   contents: write
 
-env:
-  AWS_REGION: "eu-central-1"
-  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-
 jobs:
   earthly-build-and-push:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
     permissions:
       id-token: write
       contents: write
-    uses: ./.github/workflows/earthly-build-and-push.yml
-    with:
-      repository: ${{ github.repository }}
-      branch: ${{ github.ref }}
-      upload: 'true'
-    secrets:
-      SUBSTRATE_REPO_SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
-      EARTHLY_TAR: ${{ secrets.EARTHLY_TAR }}
-      AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
-      ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          ref: ${{ inputs.branch || github.event.pull_request.head.ref || github.ref }}
+
+      - name: Setup Earthly
+        uses: ./.github/earthly-setup
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+        with:
+          ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          config_tar: ${{ secrets.EARTHLY_TAR }}
+
+      - name: Acquire AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_SECRET }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to container registry
+        uses: docker/login-action@v3
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+        with:
+          registry: ${{ secrets.ECR_REGISTRY_SECRET }}
+
+      - name: Main Build
+        env:
+          EARTHLY_CI: true
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+        run: |
+          ref=${{ github.ref_name }}
+          type=${{ github.ref_type }}
+          args=("--image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node")
+          event_name="${{ github.event_name }}"
+          if [[ "$type" == "tag" && "$ref" =~ ^v ]]; then
+            export EARTHLY_PUSH=true
+            args+=("--tags=$ref")
+          elif [[ \
+            "${{ github.event.pull_request.merged }}" == 'true' \
+            && "$ref" == 'master' \
+            || "${{ inputs.upload }}" == 'true' \
+          ]]; then
+            export EARTHLY_PUSH=true
+          fi
+          if [[ "$EARTHLY_PUSH" == true ]]; then
+            args+=(--PROFILE=production)
+          fi
+          export EARTHLY_OUTPUT=true
+          earthly -P +ci ${args[@]}
+
+      - name: Upload chain spec artifacts
+        uses: actions/upload-artifact@v4
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') && (github.ref_name == 'master' || inputs.upload == true) }}
+        with:
+          name: chain-specs
+          path: |
+            ./devnet_chain_spec.json
+            ./staging_preview_chain_spec.json
+            ./staging_preprod_chain_spec.json}
 
   devshell-tests:
     permissions:
