@@ -27,9 +27,6 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     if: github.event.action != 'closed' || github.event.pull_request.merged == true
-    concurrency:
-      group: pr-${{ github.event.pull_request.number }}-author-${{ github.event.pull_request.user.login }}
-      cancel-in-progress: true
     permissions:
       id-token: write
       contents: write
@@ -78,11 +75,11 @@ jobs:
             || "${{ inputs.upload }}" == 'true' \
           ]]; then
             export EARTHLY_PUSH=true
-            export EARTHLY_OUTPUT=true
           fi
           if [[ "$EARTHLY_PUSH" == true ]]; then
             args+=(--PROFILE=production)
           fi
+          export EARTHLY_OUTPUT=true
           earthly -P +ci ${args[@]}
 
       - name: Upload chain spec artifacts

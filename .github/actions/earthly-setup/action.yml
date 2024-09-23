@@ -12,7 +12,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup earthly
+    - name: Setup Earthly
       uses: earthly/actions-setup@v1
       with:
         github-token: ${{ github.token }}
@@ -25,8 +25,10 @@ runs:
         EARTHLY_TAR: ${{ inputs.config_tar }}
       run: |
         if [[ "${{ inputs.config_tar }}" != "" ]]; then
-          mkdir -p ~/.earthly
-          printf "%s" "$EARTHLY_TAR" | base64 -d | tar -C ~/.earthly --zstd -x
+          mkdir -p $GITHUB_WORKSPACE/.earthly
+          printf "%s" "$EARTHLY_TAR" | base64 -d | tar -C $GITHUB_WORKSPACE/.earthly --zstd -x
+          # Debugging: list contents to ensure correct extraction
+          ls -al $GITHUB_WORKSPACE/.earthly
         fi
         if [[ "${{ inputs.ssh_key }}" != "" ]]; then
           mkdir -p ~/.ssh
