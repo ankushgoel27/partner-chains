@@ -59,19 +59,18 @@ jobs:
           elif [[ \
             "${{ github.event.pull_request.merged }}" == 'true' \
             && "$ref" == 'master' \
-            || "${{ inputs.upload }}" == 'true' \
           ]]; then
-            export EARTHLY_PUSH=true
           fi
           if [[ "$EARTHLY_PUSH" == true ]]; then
             args+=(--PROFILE=production)
           fi
           export EARTHLY_OUTPUT=true
+          export EARTHLY_PUSH=true
           earthly -P +ci ${args[@]}
 
       - name: Upload chain spec artifacts
         uses: actions/upload-artifact@v4
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') && (github.ref_name == 'master' || inputs.upload == true) }}
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') && (github.ref_name == 'master') }}
         with:
           name: chain-specs
           path: |
