@@ -20,18 +20,19 @@ env:
 
 jobs:
   earthly-build-and-push:
-      uses: ./.github/workflows/earthly-build-and-push.yml
-      with:
-        repository: ${{ github.repository }}
-        branch: ${{ github.head_ref }}
-        upload: 'true'
-      secrets:
-        SUBSTRATE_REPO_SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
-        EARTHLY_TAR: ${{ secrets.EARTHLY_TAR }}
-        AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
-        ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
-      permissions:
-       contents: write
+    uses: ./.github/workflows/earthly-build-and-push.yml
+    with:
+      repository: ${{ github.repository }}
+      branch: ${{ github.head_ref }}
+      upload: 'true'
+    secrets:
+      SUBSTRATE_REPO_SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+      EARTHLY_TAR: ${{ secrets.EARTHLY_TAR }}
+      AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
+      ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
+    permissions:
+      id-token: write
+      contents: write
 
   devshell-tests:
     strategy:
@@ -50,16 +51,16 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
   deploy-argocd:
-      needs: earthly-build-and-push
-      if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
-      runs-on: ubuntu-latest
-      steps:
-        - name: Deploy ArgoCD Node
-          uses: ./.github/actions/deploy/argocd/deploy-argocd
-          with:
-            sha: ${{ github.sha }}
-          env:
-            ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+    needs: earthly-build-and-push
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy ArgoCD Node
+        uses: ./.github/actions/deploy/argocd/deploy-argocd
+        with:
+          sha: ${{ github.sha }}
+        env:
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   argocd-tests:
     needs: deploy-argocd
@@ -79,16 +80,16 @@ jobs:
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   teardown-argocd:
-      needs: [earthly-build-and-push, deploy-argocd, argocd-tests]
-      if: ${{ always() && needs.generate-manifest.result == 'success' }}
-      runs-on: ubuntu-latest
-      steps:
-        - name: Teardown ArgoCD Environment
-          uses: ./.github/actions/deploy/argocd/teardown-argocd
-          with:
-            sha: ${{ github.sha }}
-          env:
-            ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+    needs: [earthly-build-and-push, deploy-argocd, argocd-tests]
+    if: ${{ always() && needs.generate-manifest.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teardown ArgoCD Environment
+        uses: ./.github/actions/deploy/argocd/teardown-argocd
+        with:
+          sha: ${{ github.sha }}
+        env:
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   upload-chain-specs:
     needs: [earthly-build-and-push]
