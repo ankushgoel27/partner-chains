@@ -38,7 +38,7 @@ jobs:
           ref: ${{ inputs.branch || github.ref }}
 
       - name: Setup Earthly
-        uses: ./.github/actions/earthly-setup
+        uses: ./.github/earthly-setup
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-off') }}
         with:
           ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}

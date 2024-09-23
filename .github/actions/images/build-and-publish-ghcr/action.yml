@@ -19,7 +19,7 @@ runs:
         ref: ${{ inputs.sha }}
 
     - name: Setup Earthly
-      uses: ./.github/actions/earthly-setup
+      uses: ./.github/earthly-setup
       with:
         ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
         config_tar: ${{ secrets.EARTHLY_TAR }}
