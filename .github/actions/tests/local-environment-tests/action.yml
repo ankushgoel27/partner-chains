@@ -13,10 +13,10 @@ outputs: {}
 runs:
   using: "composite"
   steps:
-    - name: Checkout master
+    - name: Checkout
       uses: actions/checkout@v4
       with:
-        path: ./partner-chains-master
+        path: ./partner-chains
 
     - name: Set filename variables
       id: set-filenames
@@ -48,9 +48,9 @@ runs:
 
     - name: Deploy local environment with overrides
       run: |
-        cp -r ./partner-chains-cli-* ./partner-chains-master/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-cli
-        cp -r ./partner-chains-node-* ./partner-chains-master/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-node
-        cd ./partner-chains-master/dev/local-environment
+        cp -r ./partner-chains-cli-* ./partner-chains/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-cli
+        cp -r ./partner-chains-node-* ./partner-chains/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-node
+        cd ./partner-chains/dev/local-environment
         bash setup.sh --non-interactive --overrides --postgres-password=azMpOp4mTqhlKDmgCVQr --node-image=${{ inputs.image }}
         docker compose up -d
       shell: bash
@@ -92,13 +92,13 @@ runs:
       shell: bash
 
     - name: Run smoke tests
-      uses: ./partner-chains-master/.github/actions/tests/run-e2e-tests
+      uses: ./partner-chains/.github/actions/tests/run-e2e-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_get_status or test_get_params"
 
     - name: Wait for epoch 3
-      uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
+      uses: ./partner-chains/.github/actions/tests/wait-for-epoch
       with:
         epoch: 3
         deployment: docker
@@ -106,7 +106,7 @@ runs:
         environment:
 
     - name: Run registration tests
-      uses: ./partner-chains-master/.github/actions/tests/run-tests
+      uses: ./partner-chains/.github/actions/tests/run-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_register_candidate or test_deregister_candidate or test_add_permissioned_candidate or test_remove_permissioned_candidate"
@@ -114,7 +114,7 @@ runs:
         blockchain: substrate
 
     - name: Wait for epoch 4
-      uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
+      uses: ./partner-chains/.github/actions/tests/wait-for-epoch
       with:
         epoch: 4
         deployment: docker
@@ -122,7 +122,7 @@ runs:
         environment:
 
     - name: Run registration tests
-      uses: ./partner-chains-master/.github/actions/tests/run-tests
+      uses: ./partner-chains/.github/actions/tests/run-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_register_candidate or test_deregister_candidate or test_add_permissioned_candidate or test_remove_permissioned_candidate"
@@ -130,7 +130,7 @@ runs:
         blockchain: substrate
 
     - name: Wait for epoch 5
-      uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
+      uses: ./partner-chains/.github/actions/tests/wait-for-epoch
       with:
         epoch: 5
         deployment: docker
@@ -138,7 +138,7 @@ runs:
         environment:
 
     - name: Run all tests
-      uses: ./partner-chains-master/.github/actions/tests/run-tests
+      uses: ./partner-chains/.github/actions/tests/run-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 4
@@ -146,7 +146,7 @@ runs:
         blockchain: substrate
 
     - name: Wait for epoch 6
-      uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
+      uses: ./partner-chains/.github/actions/tests/wait-for-epoch
       with:
         epoch: 6
         deployment: docker
@@ -154,7 +154,7 @@ runs:
         environment:
 
     - name: Run all tests
-      uses: ./partner-chains-master/.github/actions/tests/run-tests
+      uses: ./partner-chains/.github/actions/tests/run-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 5
@@ -162,7 +162,7 @@ runs:
         blockchain: substrate
 
     - name: Wait for epoch 7
-      uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
+      uses: ./partner-chains/.github/actions/tests/wait-for-epoch
       with:
         epoch: 7
         deployment: docker
@@ -170,7 +170,7 @@ runs:
         environment:
 
     - name: Run all tests
-      uses: ./partner-chains-master/.github/actions/tests/run-tests
+      uses: ./partner-chains/.github/actions/tests/run-tests
       with:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 6
