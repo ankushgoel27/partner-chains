@@ -18,12 +18,10 @@ runs:
         ref: ${{ inputs.sha }}
 
     - name: Setup Earthly
-      env:
+      uses: ./.github/earthly-setup
+      with:
         SSH_KEY: ${{ env.SUBSTRATE_REPO_SSH_KEY }}
         CONFIG_TAR: ${{ env.EARTHLY_TAR }}
-      run: |
-        ./earthly-setup.sh --ssh-key "$SSH_KEY" --config-tar "$CONFIG_TAR"
-      shell: bash
 
     - name: Build Artifacts with Earthly
       env:
