@@ -15,11 +15,16 @@ mod tests;
 
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"nattoken";
 
+/// Values identifying on-chain entities involved in the native token management system on Cardano.
 #[derive(Default, Debug, Clone, PartialEq, Eq, TypeInfo, Encode, Decode, MaxEncodedLen)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MainChainScripts {
+	/// Minting policy ID of the native token
 	pub native_token_policy_id: PolicyId,
+	/// Asset name of the native token
 	pub native_token_asset_name: AssetName,
+	/// Address of the illiquid supply validator. All tokens sent to that address are effectively locked
+	/// and considered "sent" to the Partner Chain.
 	pub illiquid_supply_validator_address: MainchainAddress,
 }
 
@@ -86,8 +91,9 @@ mod inherent_provider {
 	use super::*;
 	use main_chain_follower_api::{DataSourceError, NativeTokenManagementDataSource};
 	use sidechain_mc_hash::get_mc_hash_for_block;
-	use sp_api::{ApiError, ProvideRuntimeApi};
+	use sp_api::{ApiError, Core, ProvideRuntimeApi};
 	use sp_blockchain::HeaderBackend;
+	use sp_version::RuntimeVersion;
 	use std::error::Error;
 	use std::sync::Arc;
 
@@ -101,11 +107,38 @@ mod inherent_provider {
 		DataSourceError(#[from] DataSourceError),
 		#[error("Failed to retrieve main chain scripts from the runtime: {0:?}")]
 		GetMainChainScriptsError(ApiError),
+		#[error("Failed to retrieve runtime version: {0:?}")]
+		GetRuntimeVersion(ApiError),
 		#[error("Failed to retrieve previous MC hash: {0:?}")]
 		McHashError(Box<dyn Error + Send + Sync>),
 	}
 
 	impl NativeTokenManagementInherentDataProvider {
+		/// Checks the current runtime version against `version_check` predicate, returns zero transfers
+		/// if outside the version bounds.
+		pub async fn new_for_runtime_version<Block, C>(
+			version_check: fn(RuntimeVersion) -> bool,
+			client: Arc<C>,
+			data_source: &(dyn NativeTokenManagementDataSource + Send + Sync),
+			mc_hash: McBlockHash,
+			parent_hash: <Block as BlockT>::Hash,
+		) -> Result<Self, IDPCreationError>
+		where
+			Block: BlockT,
+			C: HeaderBackend<Block>,
+			C: ProvideRuntimeApi<Block> + Send + Sync,
+			C::Api: NativeTokenManagementApi<Block>,
+		{
+			let version = (client.runtime_api().version(parent_hash))
+				.map_err(IDPCreationError::GetRuntimeVersion)?;
+
+			if version_check(version) {
+				Self::new(client, data_source, mc_hash, parent_hash).await
+			} else {
+				Ok(Self { token_amount: 0.into() })
+			}
+		}
+
 		pub async fn new<Block, C>(
 			client: Arc<C>,
 			data_source: &(dyn NativeTokenManagementDataSource + Send + Sync),
