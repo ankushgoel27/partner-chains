@@ -16,9 +16,9 @@ runs:
 
     - name: Configure kubectl
       run: |
-        echo "${{ secrets.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
-        kubectl config set-cluster my-cluster --server=${{ secrets.K8S_SERVER }} --insecure-skip-tls-verify=true
-        kubectl config set-credentials github-actions --token=${{ secrets.K8S_SA_TOKEN }}
+        echo "${{ env.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
+        kubectl config set-cluster my-cluster --server=${{ env.K8S_SERVER }} --insecure-skip-tls-verify=true
+        kubectl config set-credentials github-actions --token=${{ env.K8S_SA_TOKEN }}
         kubectl config set-context my-context --cluster=my-cluster --user=github-actions --namespace=default
         kubectl config use-context my-context
       shell: bash

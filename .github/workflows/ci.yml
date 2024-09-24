@@ -97,17 +97,18 @@ jobs:
     permissions:
       id-token: write
       contents: write
-#    if: github.event.pull_request.merged == true
+  #  if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+  
       - name: Deploy ArgoCD Node
         uses: ./.github/actions/deploy/argocd/deploy-argocd
         with:
           sha: ${{ github.sha }}
         env:
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }} 
 
   argocd-tests:
     needs: deploy-argocd
@@ -129,7 +130,7 @@ jobs:
           SSH_KEY_BINARY_HOST: ${{ secrets.SSH_KEY_BINARY_HOST }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           JIRA_URL: ${{ secrets.JIRA_URL }}
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }} 
 
   teardown-argocd:
     needs: argocd-tests

@@ -17,19 +17,19 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: input-output-hk/sidechains-infra-priv
-        token: ${{ secrets.ACTIONS_PAT }}
+        token: ${{ env.ACTIONS_PAT }}
         path: sidechains-infra-priv
 
     - name: Acquire AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN_SECRET }}
+        role-to-assume: ${{ env.AWS_ROLE_ARN_SECRET }}
         aws-region: eu-central-1
 
     - name: Login to ECR
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.ECR_REGISTRY_SECRET }}
+        registry: ${{ env.ECR_REGISTRY_SECRET }}
 
     - name: Install kubectl, kubernetes-helm, and awscli
       run: |
@@ -45,9 +45,9 @@ runs:
 
     - name: Configure kubectl
       run: |
-        echo "${{ secrets.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
-        kubectl config set-cluster my-cluster --server=${{ secrets.K8S_SERVER }} --insecure-skip-tls-verify=true
-        kubectl config set-credentials github-actions --token=${{ secrets.K8S_SA_TOKEN }}
+        echo "${{ env.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
+        kubectl config set-cluster my-cluster --server=${{ env.K8S_SERVER }} --insecure-skip-tls-verify=true
+        kubectl config set-credentials github-actions --token=${{ env.K8S_SA_TOKEN }}
         kubectl config set-context my-context --cluster=my-cluster --user=github-actions --namespace=default
         kubectl config use-context my-context
       shell: bash

@@ -29,12 +29,12 @@ runs:
     - name: Set ssh-agent to binary host
       uses: webfactory/ssh-agent@v0.9.0
       with:
-        ssh-private-key: ${{ secrets.SSH_KEY_BINARY_HOST }}
+        ssh-private-key: ${{ env.SSH_KEY_BINARY_HOST }} 
 
     - name: Acquire AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN_ }}
+        role-to-assume: ${{ env.AWS_ROLE_ARN_ }}
         aws-region: "eu-central-1"
 
     - name: Checkout sidechains-tests develop
@@ -45,7 +45,7 @@ runs:
         repository: input-output-hk/sidechains-tests
         ref: develop
         path: sidechains-tests
-        token: ${{ secrets.ACTIONS_PAT }}
+        token: ${{ env.ACTIONS_PAT }} 
 
     - name: Checkout sidechains-tests master (fallback)
       if: steps.tests-develop.outcome == 'failure'
@@ -54,7 +54,7 @@ runs:
         repository: input-output-hk/sidechains-tests
         ref: master
         path: sidechains-tests
-        token: ${{ secrets.ACTIONS_PAT }}
+        token: ${{ env.ACTIONS_PAT }} 
 
     - name: Install Earthly
       uses: earthly/actions-setup@v1
@@ -67,8 +67,8 @@ runs:
       env:
         EARTHLY_BUILD_ARGS: "CI_RUN=true"
         FORCE_COLOR: 1
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        JIRA_URL: ${{ secrets.JIRA_URL }}
+        SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }} 
+        JIRA_URL: ${{ env.JIRA_URL }} 
         JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       run: |
         cd sidechains-tests

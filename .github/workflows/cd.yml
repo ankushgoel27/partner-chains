@@ -92,6 +92,8 @@ jobs:
           AWS_REGION: "eu-central-1"
           ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
           AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
+          SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          CONFIG_TAR: ${{ secrets.EARTHLY_TAR }}
 
   partner-chains-smart-contracts:
     permissions:

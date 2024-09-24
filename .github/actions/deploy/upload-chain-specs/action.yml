@@ -19,10 +19,14 @@ runs:
       shell: bash
 
     - name: Configure kubectl
+      env:
+        KUBECONFIG_BASE64: ${{ env.kubeconfig_base64 }}
+        K8S_SERVER: ${{ env.K8S_SERVER }}
+        K8S_SA_TOKEN: ${{ env.K8S_SA_TOKEN }}
       run: |
-        echo "${{ secrets.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
-        kubectl config set-cluster my-cluster --server=${{ secrets.K8S_SERVER }} --insecure-skip-tls-verify=true
-        kubectl config set-credentials github-actions --token=${{ secrets.K8S_SA_TOKEN }}
+        echo "${KUBECONFIG_BASE64}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
+        kubectl config set-cluster my-cluster --server=${K8S_SERVER} --insecure-skip-tls-verify=true
+        kubectl config set-credentials github-actions --token=${K8S_SA_TOKEN}
         kubectl config set-context my-context --cluster=my-cluster --user=github-actions --namespace=default
         kubectl config use-context my-context
       shell: bash
@@ -34,8 +38,7 @@ runs:
 
     - name: Update Kubernetes secret for devnet chain spec
       run: |
-        SHA=${{ inputs.sha }}
-        SECRET_NAME="devnet-chain-spec-${SHA}"
+        SECRET_NAME="devnet-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=sc --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
           --from-file=devnet_chain_spec.json=./artifacts/devnet_chain_spec.json \
@@ -44,8 +47,7 @@ runs:
 
     - name: Update Kubernetes secret for staging-preview chain spec
       run: |
-        SHA=${{ inputs.sha }}
-        SECRET_NAME="staging-preview-chain-spec-${SHA}"
+        SECRET_NAME="staging-preview-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=staging-preview --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
           --from-file=staging_preview_chain_spec.json=./artifacts/staging_preview_chain_spec.json \
@@ -54,8 +56,7 @@ runs:
 
     - name: Update Kubernetes secret for staging-preprod chain spec
       run: |
-        SHA=${{ inputs.sha }}
-        SECRET_NAME="staging-preprod-chain-spec-${SHA}"
+        SECRET_NAME="staging-preprod-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=staging-preprod --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
           --from-file=staging_preprod_chain_spec.json=./artifacts/staging_preprod_chain_spec.json \
