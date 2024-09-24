@@ -77,7 +77,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Parse Flake and Download Release
-        uses: ./.github/actions/parse-flake-and-download-release
+        uses: ./.github/actions/artifacts/download-pcsc-artifact
         with:
           sha: ${{ github.sha }}
 
