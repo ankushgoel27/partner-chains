@@ -53,7 +53,7 @@ jobs:
             ./staging_preview_chain_spec.json
             ./staging_preprod_chain_spec.json
 
-  build-linux:
+  build-artifacts:
     permissions:
       id-token: write
       contents: write
@@ -61,19 +61,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build and Upload for Linux
-        uses: ./.github/actions/artifacts/build-pc-artifacts
+      - name: Build and Upload PC Artifacts
+        uses: ./.github/actions/artifacts/earthly-build-pc-artifacts
         with:
           sha: ${{ github.sha }}
           tag: CI 
-          os: linux
+          SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          CONFIG_TAR: ${{ secrets.EARTHLY_TAR }}
 
   local-environment-tests:          
     permissions:
       id-token: write
       contents: write
     runs-on: ubuntu-latest
-    needs: [build-linux]
+    needs: [build-artifacts]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,6 +83,9 @@ jobs:
         with:
           tag: CI 
           image: ${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node:${{ github.sha }}
+          AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   devshell-tests:
     permissions:
