@@ -93,25 +93,12 @@ jobs:
           SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
           CONFIG_TAR: ${{ secrets.EARTHLY_TAR }}
 
-  partner-chains-smart-contracts:
-    permissions:
-      id-token: write
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Parse Flake and Download Release
-        uses: ./.github/actions/parse-flake-and-download-release
-        with:
-          sha: ${{ inputs.sha }}
-
   local-environment-tests:          
     permissions:
       id-token: write
       contents: write
     runs-on: ubuntu-latest
-    needs: [build-linux, partner-chains-smart-contracts]
+    needs: [build-linux]
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -46,16 +46,10 @@ runs:
       with:
         name: partner-chains-node-x86_64-linux-artifact-artifact
 
-    - name: Download partner-chains-smart-contracts
-      uses: actions/download-artifact@v4
-      with:
-        name: partner-chains-smart-contracts-artifact
-
     - name: Deploy local environment with overrides
       run: |
         cp -r ./partner-chains-cli-* ./partner-chains-master/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-cli
         cp -r ./partner-chains-node-* ./partner-chains-master/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-node
-        cp -r ./partner-chains-smart-contracts*/* ./partner-chains-master/dev/local-environment/configurations/sidechain-release-bundle/overrides/
         cd ./partner-chains-master/dev/local-environment
         bash setup.sh --non-interactive --overrides --postgres-password=azMpOp4mTqhlKDmgCVQr --node-image=${{ inputs.image }}
         docker compose up -d

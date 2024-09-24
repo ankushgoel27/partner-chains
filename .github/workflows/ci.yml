@@ -74,22 +74,6 @@ jobs:
           tag: CI 
           os: linux
 
-  partner-chains-smart-contracts:
-    permissions:
-      id-token: write
-      contents: write
-    concurrency:
-      group: pr-${{ github.event.pull_request.number }}-author-${{ github.event.pull_request.user.login }}
-      cancel-in-progress: true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Parse Flake and Download Release
-        uses: ./.github/actions/artifacts/download-pcsc-artifact
-        with:
-          sha: ${{ github.sha }}
-
   local-environment-tests:          
     permissions:
       id-token: write
@@ -98,7 +82,7 @@ jobs:
       group: pr-${{ github.event.pull_request.number }}-author-${{ github.event.pull_request.user.login }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
-    needs: [build-linux, partner-chains-smart-contracts]
+    needs: [build-linux]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
