@@ -119,7 +119,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    needs: [earthly-build-and-push]
+    needs: [build]
 #    if: github.event.pull_request.merged == true
     runs-on: [self-hosted, eks]
     steps:
