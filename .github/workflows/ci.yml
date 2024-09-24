@@ -41,21 +41,21 @@ jobs:
         with:
           registry: ${{ secrets.ECR_REGISTRY_SECRET }}
 
-      - name: Build (PR only) 
-        env:
-          EARTHLY_CI: true
-          EARTHLY_OUTPUT: true 
-          EARTHLY_PUSH: false
-        if: github.event.pull_request.merged != true
-        run: |
-          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node
+#      - name: Build (PR only) 
+#        env:
+#          EARTHLY_CI: true
+#          EARTHLY_OUTPUT: true 
+#          EARTHLY_PUSH: false
+#        if: github.event.pull_request.merged != true
+#        run: |
+#          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node
    
       - name: Build and Push (On-merge) 
         env:
           EARTHLY_CI: true
           EARTHLY_OUTPUT: true
           EARTHLY_PUSH: true 
-        if: github.event.pull_request.merged == true
+#        if: github.event.pull_request.merged == true
         run: |
           earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node --PROFILE=production
 
@@ -107,7 +107,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    if: github.event.pull_request.merged == true
+#    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Deploy ArgoCD Node
@@ -156,7 +156,7 @@ jobs:
       id-token: write
       contents: write
     needs: [earthly-build-and-push]
-    if: github.event.pull_request.merged == true
+#    if: github.event.pull_request.merged == true
     runs-on: [self-hosted, eks]
     steps:
       - name: Upload chain spec artifacts to Kubernetes
