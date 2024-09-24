@@ -66,6 +66,7 @@ jobs:
         with:
           sha: ${{ github.sha }}
           tag: CI 
+        env:
           SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
           CONFIG_TAR: ${{ secrets.EARTHLY_TAR }}
 
