@@ -104,6 +104,7 @@ jobs:
           AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
           AWS_REGION: ${{ env.AWS_REGION }}
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+          ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
 
   devshell-tests:
     permissions:
