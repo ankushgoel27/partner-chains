@@ -27,6 +27,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Build and Upload for Linux
         uses: ./.github/actions/artifacts/build-linux
         with:
@@ -40,6 +44,10 @@ jobs:
       contents: write
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Build and Upload for macOS x86_64
         uses: ./.github/actions/artifacts/build-linux
         with:
@@ -53,6 +61,10 @@ jobs:
       contents: write
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Build and Upload for macOS arm64
         uses: ./.github/actions/artifacts/build-linux
         with:
@@ -67,6 +79,10 @@ jobs:
     needs: build-linux
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Build and Publish to ECR
         uses: ./.github/actions/images/build-and-publish-ecr
         with:
@@ -83,6 +99,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Parse Flake and Download Release
         uses: ./.github/actions/parse-flake-and-download-release
         with:
@@ -95,6 +115,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-linux, partner-chains-smart-contracts]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Deploy and test against local environment
         uses: ./.github/actions/tests/local-environment-tests
         with:
@@ -107,6 +131,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Generate Chain Specs
         uses: ./.github/actions/artifacts/generate-chain-specs
         with:
@@ -119,6 +147,10 @@ jobs:
     needs: generate-chain-specs
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Upload chain spec artifacts to Kubernetes
         uses: ./.github/actions/upload-chain-specs
         with:
@@ -135,6 +167,10 @@ jobs:
     needs: local-environment-tests
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Create Draft Release
         uses: ./.github/actions/release/create-draft-release
         with:
@@ -149,6 +185,10 @@ jobs:
     needs: upload-chain-specs
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Deploy staging-preview
         uses: ./.github/actions/deploy/deploy-staging-preview
         with:
@@ -171,6 +211,10 @@ jobs:
     needs: deploy-staging-preview
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Run Tests
         uses: ./.github/actions/tests/run-k8-tests
         with:
@@ -194,6 +238,10 @@ jobs:
     needs: staging-preview-tests
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Build and Publish to GHCR
         uses: ./.github/actions/images/build-and-publish-ghcr
         with:
@@ -212,6 +260,10 @@ jobs:
     needs: staging-preview-tests
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Publish Release
         uses: ./.github/actions/publish-release
         with:
@@ -226,6 +278,10 @@ jobs:
     needs: staging-preview-tests 
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Deploy staging-preprod
         uses: ./.github/actions/deploy-staging-preprod
         with:
@@ -248,6 +304,10 @@ jobs:
     needs: deploy-staging-preprod
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
       - name: Run Tests
         uses: ./.github/actions/tests/run-k8-tests
         with:
@@ -260,6 +320,5 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           JIRA_URL: ${{ secrets.JIRA_URL }}
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
-
       - name: Run additional tests
         uses: ./.github/actions/tests/staging-preprod-tests

@@ -23,24 +23,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Earthly
         uses: ./.github/earthly-setup
         with:
           ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
           config_tar: ${{ secrets.EARTHLY_TAR }}
-
       - name: Acquire AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SECRET }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Login to container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.ECR_REGISTRY_SECRET }}
-
 #      - name: Build (PR only) 
 #        env:
 #          EARTHLY_CI: true
@@ -49,7 +45,6 @@ jobs:
 #        if: github.event.pull_request.merged != true
 #        run: |
 #          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node
-   
       - name: Build and Push (On-merge) 
         env:
           EARTHLY_CI: true
@@ -58,7 +53,6 @@ jobs:
 #        if: github.event.pull_request.merged == true
         run: |
           earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node --PROFILE=production
-
       - name: Upload chain spec artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -81,20 +75,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Acquire AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_ }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Add signing key for nix
         run: echo "${{ secrets.NIX_SIGNING_KEY }}" > "${{ runner.temp }}/nix-key"
-
       - name: Run nixci to build/test all outputs
         run: |
           nix run github:srid/nixci -- -v build -- --fallback > /tmp/outputs
-
       - name: Copy nix scopes to nix cache
         run: |
           nix-store --stdin -q --deriver < /tmp/outputs | nix-store --stdin -qR --include-outputs \
@@ -110,6 +100,8 @@ jobs:
 #    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Deploy ArgoCD Node
         uses: ./.github/actions/deploy/argocd/deploy-argocd
         with:
@@ -124,6 +116,8 @@ jobs:
       contents: write
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Run Tests
         uses: ./.github/actions/tests/run-k8-tests
         with:
@@ -144,6 +138,8 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Teardown ArgoCD Environment
         uses: ./.github/actions/deploy/argocd/teardown-argocd
         with:
@@ -159,6 +155,8 @@ jobs:
 #    if: github.event.pull_request.merged == true
     runs-on: [self-hosted, eks]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Upload chain spec artifacts to Kubernetes
         uses: ./.github/actions/upload-chain-specs
         with:
@@ -175,6 +173,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Deploy Rust Docs
         uses: ./.github/actions/deploy/deploy-rustdoc
         with:
