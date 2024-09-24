@@ -85,7 +85,7 @@ jobs:
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
           ECR_REGISTRY_SECRET: ${{ secrets.ECR_REGISTRY_SECRET }}
 
-  devshell-tests:
+  test-nix-devshell:
     permissions:
       id-token: write
       contents: write
@@ -115,12 +115,12 @@ jobs:
           "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
           && rm /tmp/outputs
 
-  upload-chain-specs:
+  upload-chain-specs-to-k8s:
     permissions:
       id-token: write
       contents: write
     needs: [build]
-#    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: [self-hosted, eks]
     steps:
       - name: Checkout

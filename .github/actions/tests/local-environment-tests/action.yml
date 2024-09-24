@@ -36,6 +36,7 @@ runs:
         name: partner-chains-node-CI-x86_64-linux
     - name: Deploy local environment with overrides
       run: |
+        ls -la
         cp partner-chains-cli-${{ inputs.tag }}-x86_64-linux ./partner-chains/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-cli
         cp .partner-chains-node-${{ inputs.tag }}-x86_64-linux ./partner-chains/dev/local-environment/configurations/partner-chains-cli/overrides/partner-chains-node
         cd ./partner-chains/dev/local-environment
