@@ -7,6 +7,12 @@ inputs:
   tag:
     description: "Tag for GHCR image"
     required: true
+  ssh_key_earthly:
+    description: "SSH key for Earthly"
+    required: true
+  config_tar:
+    description: "Tarball containing earthly certs and configuration"
+    required: true
 
 outputs: {}
 
@@ -18,13 +24,28 @@ runs:
       with:
         ref: ${{ inputs.sha }}
 
-    - name: Setup Earthly
-      env:
-        SSH_KEY: ${{ env.SUBSTRATE_REPO_SSH_KEY }}
-        CONFIG_TAR: ${{ env.EARTHLY_TAR }}
-      run: |
-        ./earthly-setup.sh --ssh-key "$SSH_KEY" --config-tar "$CONFIG_TAR"
+    - name: Setup earthly
+      uses: earthly/actions-setup@v1
+      with:
+        github-token: ${{ github.token }}
+        use-cache: false
+        version: ^0.8.0
+
+    - name: Configure Secrets
       shell: bash
+      env:
+        EARTHLY_TAR: ${{ inputs.config_tar }}
+      run: |
+        if [[ "${{ inputs.config_tar }}" != "" ]]; then
+          mkdir -p ~/.earthly
+          printf "%s" "$EARTHLY_TAR" | base64 -d | tar -C ~/.earthly --zstd -x
+        fi
+        if [[ "${{ inputs.ssh_key_earthly }}" != "" ]]; then
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null || true
+          ssh-add - <<< "${{ inputs.ssh_key_earthly }}"
+        fi
 
     - name: Build and Benchmark
       env:

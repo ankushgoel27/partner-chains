@@ -77,12 +77,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: partner-chains-cli-CI-x86_64-linux
-          path: partner-chains-cli
+          path: partner-chains-cli-CI-x86_64-linux
       - name: Upload partner-chains-node artifact
         uses: actions/upload-artifact@v4
         with:
           name: partner-chains-node-CI-x86_64-linux
-          path: partner-chains-node
+          path: partner-chains-node-CI-x86_64-linux
 
   local-environment-tests:          
     permissions:
@@ -101,6 +101,9 @@ jobs:
           AWS_ROLE_ARN_SECRET: ${{ secrets.AWS_ROLE_ARN_SECRET }}
           AWS_REGION: ${{ env.AWS_REGION }}
           ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+        env:
+          SUBSTRATE_REPO_SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          EARTHLY_TAR: ${{ secrets.EARTHLY_TAR }}
 
   devshell-tests:
     permissions:

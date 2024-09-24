@@ -7,6 +7,12 @@ inputs:
   tag:
     description: "PC Artifact Tag"
     required: true
+  ssh_key:
+    description: 'SSH key for setting up known_hosts and ssh-agent'
+    required: false
+  config_tar:
+    description: 'Tarball containing earthly certs and configuration'
+    required: false
 
 outputs: {}
 

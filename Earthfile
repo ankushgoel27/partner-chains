@@ -166,5 +166,5 @@ chainspecs:
 artifacts:
   FROM +source
   RUN cargo build --locked --profile=$PROFILE --features=$FEATURES -p partner-chains-node -p partner-chains-cli
-  SAVE ARTIFACT target/$PROFILE/partner-chains-node AS LOCAL partner-chains-node
-  SAVE ARTIFACT target/$PROFILE/partner-chains-cli AS LOCAL partner-chains-cli
+  SAVE ARTIFACT target/$PROFILE/partner-chains-node AS LOCAL partner-chains-node-CI-x86_64-linux
+  SAVE ARTIFACT target/$PROFILE/partner-chains-cli AS LOCAL partner-chains-cli-CI-x86_64-linux

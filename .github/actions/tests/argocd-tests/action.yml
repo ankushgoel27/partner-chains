@@ -7,31 +7,25 @@ inputs:
   node-port:
     description: "Port for the node"
     required: true
+  ssh_key_earthly:
+    description: "SSH key for Earthly"
+    required: true
+  config_tar:
+    description: "Tarball containing earthly certs and configuration"
+    required: true
+  ssh_key_binary_host:
+    description: "SSH key for binary host"
+    required: true
 
 outputs: {}
 
 runs:
   using: "composite"
   steps:
-    - name: Install kubectl and awscli
-      run: |
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        chmod +x ./kubectl
-        sudo mv ./kubectl /usr/local/bin/kubectl
-        sudo apt update && sudo apt install -y awscli
-      shell: bash
-    - name: Configure kubectl
-      run: |
-        echo "${{ env.kubeconfig_base64 }}" | base64 --decode > ${{ runner.temp }}/kubeconfig.yaml
-        kubectl config set-cluster my-cluster --server=${{ env.K8S_SERVER }} --insecure-skip-tls-verify=true
-        kubectl config set-credentials github-actions --token=${{ env.K8S_SA_TOKEN }}
-        kubectl config set-context my-context --cluster=my-cluster --user=github-actions --namespace=default
-        kubectl config use-context my-context
-      shell: bash
-    - name: Health check integration env
+    - name: Health Check Integration Env
       run: |
         curl --request POST \
-          --url "http://${{ inputs['node-host'] }}:${{ inputs['node-port'] }}" \
+          --url "http://${{ inputs.node-host }}:${{ inputs.node-port }}" \
           --header 'Content-Type: application/json' \
           --data '{
           "jsonrpc": "2.0",
@@ -40,3 +34,75 @@ runs:
           "id": 1
         }'
       shell: bash
+
+    - name: Set SSH-Agent to Binary Host
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ env.SSH_KEY_BINARY_HOST }}
+
+    - name: Acquire AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.AWS_ROLE_ARN_ }}
+        aws-region: "eu-central-1"
+
+    - name: Checkout sidechains-tests
+      uses: actions/checkout@v4
+      with:
+        repository: input-output-hk/sidechains-tests
+        ref: master
+        path: sidechains-tests
+
+    - name: Setup earthly
+      uses: earthly/actions-setup@v1
+      with:
+        github-token: ${{ github.token }}
+        use-cache: false
+        version: ^0.8.0
+
+    - name: Configure Secrets
+      shell: bash
+      env:
+        EARTHLY_TAR: ${{ inputs.config_tar }}
+      run: |
+        if [[ "${{ inputs.config_tar }}" != "" ]]; then
+          mkdir -p ~/.earthly
+          printf "%s" "$EARTHLY_TAR" | base64 -d | tar -C ~/.earthly --zstd -x
+        fi
+        if [[ "${{ inputs.ssh_key_earthly }}" != "" ]]; then
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null || true
+          ssh-add - <<< "${{ inputs.ssh_key_earthly }}"
+        fi
+
+    - name: Run Tests
+      env:
+        EARTHLY_BUILD_ARGS: "CI_RUN=true"
+        FORCE_COLOR: 1
+        SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+        JIRA_URL: ${{ env.JIRA_URL }}
+        JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      run: |
+        cd sidechains-tests
+        earthly --secret AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+                --secret AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                --secret AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                --secret SLACK_WEBHOOK_URL="$SLACK_WEBHOOK_URL" \
+                --secret JIRA_URL="$JIRA_URL" \
+                --ssh-auth-sock="$SSH_AUTH_SOCK" \
+                +report \
+                --markers=CD \
+                --node_host="${{ inputs.node-host }}" \
+                --node_port="${{ inputs.node-port }}" \
+                --log_level=debug \
+                --allure_project_id "${{ github.ref_name }}" \
+                --report_to_slack=true \
+                --github_actor_username "${{ github.actor }}" \
+                --repository "${{ github.repository }}" \
+                --job_url="$JOB_URL" \
+                --env="ci" \
+                --stack="ci" \
+                --test_environment=CI \
+                --decrypt=true
+      shell: bash 

@@ -139,6 +139,9 @@ jobs:
         with:
           node-host: sha-${{ inputs.sha }}-service.integration-testing.svc.cluster.local
           node-port: 9933
+          ssh_key_earthly: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          config_tar: ${{ secrets.EARTHLY_TAR }}
+          ssh_key_binary_host: ${{ secrets.SSH_KEY_BINARY_HOST }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           AWS_ROLE_ARN_: ${{ secrets.AWS_ROLE_ARN_ }}
@@ -274,6 +277,8 @@ jobs:
         with:
           sha: ${{ inputs.sha }}
           tag: ${{ inputs.tag }}
+          ssh_key_earthly: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          config_tar: ${{ secrets.EARTHLY_TAR }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
