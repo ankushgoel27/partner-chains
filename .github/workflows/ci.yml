@@ -37,22 +37,13 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.ECR_REGISTRY_SECRET }}
-#      - name: Build (PR only) 
-#        env:
-#          EARTHLY_CI: true
-#          EARTHLY_OUTPUT: true 
-#          EARTHLY_PUSH: false
-#        if: github.event.pull_request.merged != true
-#        run: |
-#          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node
-      - name: Build and Push (On-merge) 
+      - name: Build and Push to ECR
         env:
           EARTHLY_CI: true
-          EARTHLY_OUTPUT: true
-          EARTHLY_PUSH: true 
-#        if: github.event.pull_request.merged == true
+          EARTHLY_OUTPUT: true 
+          EARTHLY_PUSH: true
         run: |
-          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node --PROFILE=production
+          earthly -P +ci --image=${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node
       - name: Upload chain spec artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -61,6 +52,55 @@ jobs:
             ./devnet_chain_spec.json
             ./staging_preview_chain_spec.json
             ./staging_preprod_chain_spec.json
+
+  build-linux:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
+      - name: Build and Upload for Linux
+        uses: ./.github/actions/artifacts/build-linux
+        with:
+          sha: ${{ github.sha }}
+          tag: CI 
+          os: linux
+
+  partner-chains-smart-contracts:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
+      - name: Parse Flake and Download Release
+        uses: ./.github/actions/parse-flake-and-download-release
+        with:
+          sha: ${{ github.sha }}
+
+  local-environment-tests:          
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    needs: [build-linux, partner-chains-smart-contracts]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master 
+      - name: Deploy and test against local environment
+        uses: ./.github/actions/tests/local-environment-tests
+        with:
+          tag: CI 
+          image: ${{ secrets.ECR_REGISTRY_SECRET }}/substrate-node:${{ github.sha }}
 
   devshell-tests:
     permissions:
@@ -91,8 +131,6 @@ jobs:
           | nix copy --stdin --to \
           "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
           && rm /tmp/outputs
-
-
 
   upload-chain-specs:
     permissions:

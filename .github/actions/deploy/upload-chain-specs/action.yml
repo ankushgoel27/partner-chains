@@ -41,7 +41,7 @@ runs:
         SECRET_NAME="devnet-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=sc --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
-          --from-file=devnet_chain_spec.json=./artifacts/devnet_chain_spec.json \
+          --from-file=devnet_chain_spec.json=./devnet_chain_spec.json \
           --namespace=sc
       shell: bash
 
@@ -50,7 +50,7 @@ runs:
         SECRET_NAME="staging-preview-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=staging-preview --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
-          --from-file=staging_preview_chain_spec.json=./artifacts/staging_preview_chain_spec.json \
+          --from-file=staging_preview_chain_spec.json=./staging_preview_chain_spec.json \
           --namespace=staging-preview
       shell: bash
 
@@ -59,6 +59,6 @@ runs:
         SECRET_NAME="staging-preprod-chain-spec-${{ inputs.sha }}"
         kubectl delete secret "$SECRET_NAME" --namespace=staging-preprod --ignore-not-found
         kubectl create secret generic "$SECRET_NAME" \
-          --from-file=staging_preprod_chain_spec.json=./artifacts/staging_preprod_chain_spec.json \
+          --from-file=staging_preprod_chain_spec.json=./staging_preprod_chain_spec.json \
           --namespace=staging-preprod
       shell: bash
