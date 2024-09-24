@@ -61,14 +61,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build and Upload PC Artifacts
-        uses: ./.github/actions/artifacts/earthly-build-pc-artifacts
+      - name: Setup Earthly
+        uses: ./.github/earthly-setup
         with:
-          sha: ${{ github.sha }}
-          tag: CI 
+          ssh_key: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
+          config_tar: ${{ secrets.EARTHLY_TAR }}
+      - name: Build Artifacts with Earthly
         env:
-          SSH_KEY: ${{ secrets.SUBSTRATE_REPO_SSH_KEY }}
-          CONFIG_TAR: ${{ secrets.EARTHLY_TAR }}
+          EARTHLY_CI: true
+          EARTHLY_OUTPUT: true
+        run: |
+          earthly -P +artifacts --PROFILE=production
+        shell: bash
+      - name: Upload partner-chains-cli artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: partner-chains-cli-CI-x86_64-linux
+          path: partner-chains-cli
+      - name: Upload partner-chains-node artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: partner-chains-node-CI-x86_64-linux
+          path: partner-chains-node
 
   local-environment-tests:          
     permissions:
