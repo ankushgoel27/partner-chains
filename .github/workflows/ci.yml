@@ -159,7 +159,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Upload chain spec artifacts to Kubernetes
-        uses: ./.github/actions/upload-chain-specs
+        uses: ./.github/actions/deploy/upload-chain-specs
         with:
           sha: ${{ github.sha }}
         env:

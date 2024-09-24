@@ -107,6 +107,9 @@ runs:
       uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
       with:
         epoch: 3
+        deployment: docker
+        node: cardano-node-1
+        environment:
 
     - name: Run registration tests
       uses: ./partner-chains-master/.github/actions/tests/run-tests
@@ -114,11 +117,15 @@ runs:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_register_candidate or test_deregister_candidate or test_add_permissioned_candidate or test_remove_permissioned_candidate"
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
+        blockchain: substrate
 
     - name: Wait for epoch 4
       uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
       with:
         epoch: 4
+        deployment: docker
+        node: cardano-node-1
+        environment:
 
     - name: Run registration tests
       uses: ./partner-chains-master/.github/actions/tests/run-tests
@@ -126,11 +133,15 @@ runs:
         env: ${{ env.TEST_ENVIRONMENT }}
         keyword: "test_register_candidate or test_deregister_candidate or test_add_permissioned_candidate or test_remove_permissioned_candidate"
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
+        blockchain: substrate
 
     - name: Wait for epoch 5
       uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
       with:
         epoch: 5
+        deployment: docker
+        node: cardano-node-1
+        environment:
 
     - name: Run all tests
       uses: ./partner-chains-master/.github/actions/tests/run-tests
@@ -138,11 +149,15 @@ runs:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 4
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
+        blockchain: substrate
 
     - name: Wait for epoch 6
       uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
       with:
         epoch: 6
+        deployment: docker
+        node: cardano-node-1
+        environment:
 
     - name: Run all tests
       uses: ./partner-chains-master/.github/actions/tests/run-tests
@@ -150,11 +165,15 @@ runs:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 5
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
+        blockchain: substrate
 
     - name: Wait for epoch 7
       uses: ./partner-chains-master/.github/actions/tests/wait-for-epoch
       with:
         epoch: 7
+        deployment: docker
+        node: cardano-node-1
+        environment:
 
     - name: Run all tests
       uses: ./partner-chains-master/.github/actions/tests/run-tests
@@ -162,6 +181,7 @@ runs:
         env: ${{ env.TEST_ENVIRONMENT }}
         mc_epoch: 6
         init_timestamp: ${{ env.INIT_TIMESTAMP }}
+        blockchain: substrate
 
     - name: Stop partner-chains-demo
       run: docker compose down --volumes

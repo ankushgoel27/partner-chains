@@ -24,6 +24,9 @@ inputs:
     description: 'MC initialization timestamp in seconds'
     required: false
     default: '0'
+  blockchain:
+    description: 'Blockchain to test'
+    required: true
 
 runs:
   using: composite
@@ -37,7 +40,7 @@ runs:
 
         cd e2e-tests
         source venv/bin/activate
-        pytest --blockchain substrate \
+        pytest --blockchain ${{ inputs.blockchain }}\
           --env ${{ inputs.env }} \
           --stack ${{ inputs.env }} \
           --log-cli-level ${{ inputs.log_level }} \

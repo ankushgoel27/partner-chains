@@ -84,7 +84,7 @@ runs:
         EARTHLY_CI: true
         EARTHLY_PUSH: false
         EARTHLY_OUTPUT: true
-      run: earthly -P +docker --image="ghcr-image" --tags="latest"
+      run: earthly -P +docker --image="ghcr-image" --tags="latest" --PROFILE=production
       shell: bash
 
     - name: Login to GitHub Container Registry
