@@ -92,61 +92,7 @@ jobs:
           "s3://cache.sc.iog.io?secret-key=${{ runner.temp }}/nix-key&region=$AWS_DEFAULT_REGION" \
           && rm /tmp/outputs
 
-  deploy-argocd:
-    needs: earthly-build-and-push
-    permissions:
-      id-token: write
-      contents: write
-  #  if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-  
-      - name: Deploy ArgoCD Node
-        uses: ./.github/actions/deploy/argocd/deploy-argocd
-        with:
-          sha: ${{ github.sha }}
-        env:
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }} 
 
-  argocd-tests:
-    needs: deploy-argocd
-    permissions:
-      id-token: write
-      contents: write
-    runs-on: [self-hosted, eks]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run Tests
-        uses: ./.github/actions/tests/argocd-tests
-        with:
-          node-host: sha-${{ github.sha }}-service.integration-testing.svc.cluster.local
-          node-port: 9933
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          AWS_ROLE_ARN_: ${{ secrets.AWS_ROLE_ARN_ }}
-          SSH_KEY_BINARY_HOST: ${{ secrets.SSH_KEY_BINARY_HOST }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }} 
-
-  teardown-argocd:
-    needs: argocd-tests
-    permissions:
-      id-token: write
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Teardown ArgoCD Environment
-        uses: ./.github/actions/deploy/argocd/teardown-argocd
-        with:
-          sha: ${{ github.sha }}
-        env:
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
 
   upload-chain-specs:
     permissions:
