@@ -93,8 +93,7 @@ where
 				"SIDECHAIN_BLOCK_BENEFICIARY",
 			)?;
 
-		let native_token = NativeTokenIDP::new_for_runtime_version(
-			|_any_version| true,
+		let native_token = NativeTokenIDP::new(
 			client.clone(),
 			data_sources.native_token.as_ref(),
 			mc_hash.mc_hash(),
@@ -173,8 +172,7 @@ where
 		)
 		.await?;
 
-		let native_token = NativeTokenIDP::new_for_runtime_version(
-			|_any_version| true,
+		let native_token = NativeTokenIDP::new(
 			client.clone(),
 			data_sources.native_token.as_ref(),
 			mc_hash,
