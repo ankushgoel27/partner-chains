@@ -46,6 +46,8 @@ build:
   ARG EARTHLY_GIT_HASH
   RUN cargo build --locked --profile=$PROFILE --features=$FEATURES
   SAVE ARTIFACT target/*/partner-chains-node AS LOCAL partner-chains-node
+  SAVE ARTIFACT target/*/partner-chains-node AS LOCAL partner-chains-node-CI-x86_64-linux
+  SAVE ARTIFACT target/*/partner-chains-cli AS LOCAL partner-chains-cli-CI-x86_64-linux
 
 test:
   FROM +build
@@ -163,8 +165,3 @@ chainspecs:
   SAVE ARTIFACT staging_preview_chain_spec.json AS LOCAL staging_preview_chain_spec.json
   SAVE ARTIFACT staging_preprod_chain_spec.json AS LOCAL staging_preprod_chain_spec.json
       
-artifacts:
-  FROM +source
-  RUN cargo build --locked --profile=$PROFILE --features=$FEATURES -p partner-chains-node -p partner-chains-cli
-  SAVE ARTIFACT target/$PROFILE/partner-chains-node AS LOCAL partner-chains-node-CI-x86_64-linux
-  SAVE ARTIFACT target/$PROFILE/partner-chains-cli AS LOCAL partner-chains-cli-CI-x86_64-linux
