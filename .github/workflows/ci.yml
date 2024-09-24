@@ -120,7 +120,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Run Tests
-        uses: ./.github/actions/tests/run-k8-tests
+        uses: ./.github/actions/tests/argocd-tests
         with:
           node-host: sha-${{ github.sha }}-service.integration-testing.svc.cluster.local
           node-port: 9933

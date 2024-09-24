@@ -1,5 +1,5 @@
-name: "Test Against Staging Preprod Environment"
-description: "Tests against Staging Preprod Environment"
+name: "Run Tests against ArgoCD Node"
+description: "Run end-to-end tests against the ArgoCD node"
 inputs:
   node-host:
     description: "Host for the node"
